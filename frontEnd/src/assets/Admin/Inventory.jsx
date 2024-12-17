@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export const Inventory = () => {
   const navigate = useNavigate(); // Initialize the navigation hook
@@ -14,6 +15,22 @@ export const Inventory = () => {
 
   // State for storing products
   const [products, setProducts] = useState([]);
+
+  // Fetch products from backend
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:5211/api/Admin/FetchProducts"
+      ); // Update endpoint if needed
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts(); // Fetch products on component mount
+  }, []);
 
   const handleLogout = () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
@@ -31,7 +48,7 @@ export const Inventory = () => {
     setProduct({ ...product, [name]: value });
   };
 
-  const handleAddProduct = (e) => {
+  const handleAddProduct = async (e) => {
     e.preventDefault();
 
     // Validate inputs
@@ -45,18 +62,23 @@ export const Inventory = () => {
       return;
     }
 
-    // Add product to the list
-    setProducts([...products, { ...product }]);
-
-    // Reset the form fields
-    setProduct({
-      code: "",
-      description: "",
-      qty: "",
-      price: "",
-    });
-
-    alert("Product added successfully.");
+    try {
+      // Send POST request to backend
+      const response = await axios.post(
+        "http://localhost:5211/api/Admin/AddProduct",
+        product
+      ); // Update endpoint if needed
+      alert(response.data.message || "Product added successfully.");
+      setProduct({
+        code: "",
+        description: "",
+        qty: "",
+        price: "",
+      }); // Reset form fields
+      fetchProducts(); // Refresh the product list
+    } catch (error) {
+      alert(error.response?.data || "An error occurred.");
+    }
   };
 
   return (
@@ -152,7 +174,7 @@ export const Inventory = () => {
                   {prod.description}
                 </td>
                 <td className="border border-gray-300 p-3">{prod.qty}</td>
-                <td className="border border-gray-300 p-3">${prod.price}</td>
+                <td className="border border-gray-300 p-3">₱{prod.price}</td>
               </tr>
             ))}
           </tbody>

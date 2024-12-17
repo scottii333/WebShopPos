@@ -140,9 +140,50 @@ namespace backEnd.Controllers
             }
         }
 
+        [HttpPost("AddProduct")]
+        public async Task<IActionResult> AddProduct([FromBody] Product product)
+        {
+            try
+            {
+                // Check if the table exists, and create it if not
+                await _context.Database.ExecuteSqlRawAsync(@"
+                    IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'AddProd' AND xtype = 'U')
+                    CREATE TABLE AddProd (
+                        Id INT IDENTITY(1,1) PRIMARY KEY,
+                        Code NVARCHAR(50) NOT NULL,
+                        Description NVARCHAR(255) NOT NULL,
+                        Quantity INT NOT NULL,
+                        Price DECIMAL(18,2) NOT NULL
+                    )");
 
+                // Add product to the table
+                _context.AddProd.Add(product);
+                await _context.SaveChangesAsync();
 
+                return Ok(new { Message = "Product added successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
+            }
+        }
 
-
+        // GET: api/Products
+        [HttpGet("FetchProducts")]
+        public async Task<IActionResult> GetProducts()
+        {
+            try
+            {
+                var products = await _context.AddProd.ToListAsync();
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
+            }
+        }
     }
+
+
+
 }
