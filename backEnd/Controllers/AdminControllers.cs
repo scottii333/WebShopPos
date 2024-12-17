@@ -74,13 +74,75 @@ namespace backEnd.Controllers
 
             return Ok(new { Message = "Login successful.", Username = account.Username });
         }
-   
-   
+
+        // GET: api/Admin/AllAccounts
+        [HttpGet("AllAccounts")]
+        public async Task<IActionResult> GetAllAccounts()
+        {
+            try
+            {
+                if (_context.WebShopAcc == null)
+                {
+                    return StatusCode(500, "WebShopAcc table is not initialized.");
+                }
+
+                // Fetch all admin account usernames
+                var accounts = await _context.WebShopAcc
+                    .Select(a => new { a.Username, a.Email })
+                    .ToListAsync();
+
+                return Ok(accounts);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
 
 
-   
-   
-   
-   
+        [HttpPost("AddAdmin")]
+        public async Task<IActionResult> AddAdmin(WebShopAccounts newAdmin)
+        {
+            try
+            {
+                // Check if the database can connect
+                if (!_context.Database.CanConnect())
+                {
+                    return StatusCode(500, "Database connection failed.");
+                }
+
+                // Ensure WebShopAcc table exists
+                var tableExists = await _context.Database.ExecuteSqlRawAsync(
+                    "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'WebShopAcc') BEGIN CREATE TABLE WebShopAcc (Id INT IDENTITY(1,1) PRIMARY KEY, Email NVARCHAR(255) NOT NULL UNIQUE, Password NVARCHAR(255) NOT NULL, Username NVARCHAR(255)) END"
+                );
+
+                if (_context.WebShopAcc == null)
+                {
+                    return StatusCode(500, "WebShopAcc table is not initialized.");
+                }
+
+                // Check if email already exists
+                var existingAdmin = await _context.WebShopAcc.FirstOrDefaultAsync(a => a.Email == newAdmin.Email);
+                if (existingAdmin != null)
+                {
+                    return BadRequest("Email already exists.");
+                }
+
+                // Add new admin account
+                _context.WebShopAcc.Add(newAdmin);
+                await _context.SaveChangesAsync();
+
+                return Ok("Admin added successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
+
+
+
+
+
     }
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import Logo from "../Images/Logo.png";
+import { useNavigate } from "react-router-dom";
 
 export const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +10,8 @@ export const Auth = () => {
     password: "",
     username: "",
   });
+
+  const navigate = useNavigate(); // Initialize the navigation hook
 
   const toggleAuthMode = () => {
     setIsLogin((prev) => !prev);
@@ -44,6 +47,7 @@ export const Auth = () => {
           }
         );
         alert(response.data.message || "Login successful!");
+        navigate("/dashboard"); // Navigate to the dashboard on successful login
       } else {
         // Register Request
         const response = await axios.post(
