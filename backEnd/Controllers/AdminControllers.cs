@@ -145,6 +145,8 @@ namespace backEnd.Controllers
         {
             try
             {
+
+                 Console.WriteLine($"Received: Code={product.Code}, Description={product.Description}, Quantity={product.Quantity}, Price={product.Price}");
                 // Check if the table exists, and create it if not
                 await _context.Database.ExecuteSqlRawAsync(@"
                     IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'AddProd' AND xtype = 'U')

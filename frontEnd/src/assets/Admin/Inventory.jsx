@@ -63,10 +63,18 @@ export const Inventory = () => {
     }
 
     try {
+      // Map `qty` to `Quantity` for backend compatibility
+      const payload = {
+        code: product.code,
+        description: product.description,
+        quantity: parseInt(product.qty, 10), // Ensure the value is an integer
+        price: parseFloat(product.price), // Ensure the value is a float
+      };
+
       // Send POST request to backend
       const response = await axios.post(
         "http://localhost:5211/api/Admin/AddProduct",
-        product
+        payload
       ); // Update endpoint if needed
       alert(response.data.message || "Product added successfully.");
       setProduct({
@@ -173,7 +181,7 @@ export const Inventory = () => {
                 <td className="border border-gray-300 p-3">
                   {prod.description}
                 </td>
-                <td className="border border-gray-300 p-3">{prod.qty}</td>
+                <td className="border border-gray-300 p-3">{prod.quantity}</td>
                 <td className="border border-gray-300 p-3">₱{prod.price}</td>
               </tr>
             ))}
