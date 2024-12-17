@@ -167,3 +167,4 @@ C:\Users\splen\Desktop\ReactProjects\WebShopPos\backEnd\obj\Debug\net8.0\refint\
 C:\Users\splen\Desktop\ReactProjects\WebShopPos\backEnd\obj\Debug\net8.0\backEnd.pdb
 C:\Users\splen\Desktop\ReactProjects\WebShopPos\backEnd\obj\Debug\net8.0\backEnd.genruntimeconfig.cache
 C:\Users\splen\Desktop\ReactProjects\WebShopPos\backEnd\obj\Debug\net8.0\ref\backEnd.dll
+C:\Users\splen\Desktop\ReactProjects\WebShopPos\backEnd\obj\Debug\net8.0\backEnd.sourcelink.json

@@ -1,7 +1,7 @@
 // WebShopAcc Entity
 using System.ComponentModel.DataAnnotations;
 
-public class WebShopAcc
+public class WebShopAccounts
     {
         public int Id { get; set; }
         [Required]
@@ -9,5 +9,5 @@ public class WebShopAcc
         public required string Email { get; set; }
         [Required]
         public required string Password { get; set; }
-        public string? FullName { get; set; }
+        public string? Username { get; set; }
     }

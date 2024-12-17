@@ -6,6 +6,6 @@ namespace backEnd.Data
     {
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
-        public DbSet<WebShopAcc> WebShopAcc { get; set; }
+        public DbSet<WebShopAccounts>? WebShopAcc { get; set; } = null!;
     }
 }
