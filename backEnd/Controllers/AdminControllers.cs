@@ -264,6 +264,82 @@ namespace backEnd.Controllers
         }
 
 
+        [HttpGet("Report")]
+        public async Task<IActionResult> GetReport(string type)
+        {
+            try
+            {
+                if (type == "monthlySummary")
+                {
+                    // Monthly Summary Report
+                    var summary = await _context.ProdHistory
+                        .GroupBy(p => new { Month = p.SaleDate.Month, Year = p.SaleDate.Year })
+                        .Select(g => new
+                        {
+                            Month = $"{g.Key.Month}/{g.Key.Year}",
+                            TotalSales = g.Sum(p => p.QuantitySold),
+                            TotalRevenue = g.Sum(p => p.QuantitySold * (from prod in _context.AddProd where prod.Code == p.ProductCode select prod.Price).FirstOrDefault())
+                        })
+                        .ToListAsync();
+
+                    return Ok(summary);
+                }
+
+                IQueryable<dynamic> query;
+
+                switch (type)
+                {
+                    case "bestSelling":
+                        query = _context.ProdHistory
+                            .GroupBy(p => new { p.ProductCode })
+                            .Select(g => new
+                            {
+                                ProductCode = g.Key.ProductCode,
+                                Description = (from prod in _context.AddProd where prod.Code == g.Key.ProductCode select prod.Description).FirstOrDefault(),
+                                QuantitySold = g.Sum(p => p.QuantitySold)
+                            })
+                            .OrderByDescending(r => r.QuantitySold)
+                            .Take(10);
+                        break;
+
+                    case "leastSelling":
+                        query = _context.ProdHistory
+                            .GroupBy(p => new { p.ProductCode })
+                            .Select(g => new
+                            {
+                                ProductCode = g.Key.ProductCode,
+                                Description = (from prod in _context.AddProd where prod.Code == g.Key.ProductCode select prod.Description).FirstOrDefault(),
+                                QuantitySold = g.Sum(p => p.QuantitySold)
+                            })
+                            .OrderBy(r => r.QuantitySold)
+                            .Take(10);
+                        break;
+
+                    case "lowStock":
+                        query = _context.AddProd
+                            .Where(p => p.Quantity < 10)
+                            .Select(p => new
+                            {
+                                ProductCode = p.Code,
+                                Description = p.Description,
+                                StockRemaining = p.Quantity
+                            });
+                        break;
+
+                    default:
+                        return BadRequest("Invalid report type.");
+                }
+
+                var result = await query.ToListAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+
 
     }
 
