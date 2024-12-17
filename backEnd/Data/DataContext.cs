@@ -10,6 +10,8 @@ namespace backEnd.Data
 
          public DbSet<Product> AddProd { get; set; } = null!;
 
+         public DbSet<ProdHistory> ProdHistory { get; set; } = null!;
+
           protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Configure precision for Price in AddProd table

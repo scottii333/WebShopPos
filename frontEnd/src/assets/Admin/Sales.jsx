@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 
 export const Sales = () => {
-  const navigate = useNavigate(); // Navigation hook
+  const navigate = useNavigate();
 
-  // State for storing products
+  // States
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [sellQty, setSellQty] = useState("");
+  const [salesHistory, setSalesHistory] = useState([]);
 
   // Fetch products from backend
   const fetchProducts = async () => {
@@ -22,19 +23,32 @@ export const Sales = () => {
     }
   };
 
+  // Fetch sales history from backend
+  const fetchHistory = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:5211/api/Admin/FetchHistory"
+      );
+      setSalesHistory(response.data);
+    } catch (error) {
+      console.error("Error fetching sales history:", error);
+    }
+  };
+
   useEffect(() => {
-    fetchProducts(); // Fetch products on component mount
+    fetchProducts();
+    fetchHistory();
   }, []);
 
   const handleLogout = () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (confirmLogout) {
-      navigate("/"); // Navigate back to the index route
+      navigate("/");
     }
   };
 
   const goToDashboard = () => {
-    navigate("/dashboard"); // Navigate to the dashboard
+    navigate("/dashboard");
   };
 
   const handleSell = async () => {
@@ -54,7 +68,6 @@ export const Sales = () => {
     }
 
     try {
-      // Send POST request to backend to deduct the quantity
       const response = await axios.post(
         "http://localhost:5211/api/Admin/DeductQuantity",
         {
@@ -62,17 +75,17 @@ export const Sales = () => {
           quantity: sellQty,
         }
       );
-
       alert(response.data.message || "Sale processed successfully.");
-      setSellQty(""); // Reset the input
-      fetchProducts(); // Refresh product list
+      setSellQty("");
+      fetchProducts();
+      fetchHistory();
     } catch (error) {
       alert(error.response?.data || "An error occurred.");
     }
   };
 
   return (
-    <div className="flex items-center flex-col h-[100dvh] bg-[#dcf3f3]">
+    <div className="flex items-center flex-col min-h-[100dvh] h-auto bg-[#dcf3f3]">
       <div className="mt-[5rem] w-[90%] border-b-[1px] border-black flex justify-between items-center">
         <h1 className="text-[1.5rem]">SALES</h1>
         <div className="flex gap-[1rem]">
@@ -122,6 +135,40 @@ export const Sales = () => {
         >
           Process Sale
         </button>
+      </div>
+
+      {/* Sales History Table */}
+      <div className="mt-[3rem] w-[90%] flex flex-col items-center mb-[10rem]">
+        <h2 className="text-[1.4rem] font-semibold">Sales History</h2>
+        <table className="w-full max-w-[600px] mt-[1rem] border-collapse text-left shadow-lg">
+          <thead>
+            <tr className="bg-[#d3d3c3] text-black">
+              <th className="border border-gray-300 p-3">Product Code</th>
+              <th className="border border-gray-300 p-3">Quantity Sold</th>
+              <th className="border border-gray-300 p-3">Sale Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {salesHistory.map((history, index) => (
+              <tr
+                key={index}
+                className={`${
+                  index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                } hover:bg-blue-100`}
+              >
+                <td className="border border-gray-300 p-3">
+                  {history.productCode}
+                </td>
+                <td className="border border-gray-300 p-3">
+                  {history.quantitySold}
+                </td>
+                <td className="border border-gray-300 p-3">
+                  {new Date(history.saleDate).toLocaleString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

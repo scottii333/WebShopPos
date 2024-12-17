@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backEnd.Data;
+using Microsoft.Data.SqlClient;
 
 namespace backEnd.Controllers
 {
@@ -146,7 +147,7 @@ namespace backEnd.Controllers
             try
             {
 
-                 Console.WriteLine($"Received: Code={product.Code}, Description={product.Description}, Quantity={product.Quantity}, Price={product.Price}");
+                Console.WriteLine($"Received: Code={product.Code}, Description={product.Description}, Quantity={product.Quantity}, Price={product.Price}");
                 // Check if the table exists, and create it if not
                 await _context.Database.ExecuteSqlRawAsync(@"
                     IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'AddProd' AND xtype = 'U')
@@ -184,6 +185,86 @@ namespace backEnd.Controllers
                 return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
             }
         }
+
+
+
+        // POST: api/Admin/DeductQuantity
+        [HttpPost("DeductQuantity")]
+        public async Task<IActionResult> DeductQuantity([FromBody] DeductRequest request)
+        {
+            try
+            {
+                // Ensure ProdHistory table exists
+                await _context.Database.ExecuteSqlRawAsync(@"
+            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name = 'ProdHistory' AND xtype = 'U')
+            CREATE TABLE ProdHistory (
+                Id INT IDENTITY(1,1) PRIMARY KEY,
+                ProductCode NVARCHAR(50) NOT NULL,
+                QuantitySold INT NOT NULL,
+                SaleDate DATETIME NOT NULL
+            )");
+
+                // Fetch the product from the database
+                var product = await _context.AddProd.FirstOrDefaultAsync(p => p.Id == request.ProductId);
+                if (product == null)
+                {
+                    return NotFound("Product not found.");
+                }
+
+                if (product.Quantity < request.Quantity)
+                {
+                    return BadRequest("Insufficient stock.");
+                }
+
+                // Deduct the quantity
+                product.Quantity -= request.Quantity;
+
+                // Add the sale to ProdHistory
+                await _context.Database.ExecuteSqlRawAsync(@"
+            INSERT INTO ProdHistory (ProductCode, QuantitySold, SaleDate)
+            VALUES (@ProductCode, @QuantitySold, @SaleDate)",
+                    new[] {
+                new SqlParameter("@ProductCode", product.Code),
+                new SqlParameter("@QuantitySold", request.Quantity),
+                new SqlParameter("@SaleDate", DateTime.UtcNow)
+                    });
+
+                // Save changes
+                await _context.SaveChangesAsync();
+
+                return Ok(new { Message = "Sale processed successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+        // GET: api/Admin/FetchHistory
+        [HttpGet("FetchHistory")]
+        public async Task<IActionResult> FetchHistory()
+        {
+            try
+            {
+                var history = await _context.ProdHistory
+                    .Select(h => new
+                    {
+                        h.ProductCode,
+                        h.QuantitySold,
+                        h.SaleDate
+                    })
+                    .ToListAsync();
+
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = $"An error occurred: {ex.Message}" });
+            }
+        }
+
+
+
     }
 
 
